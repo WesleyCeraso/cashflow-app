@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Box, Container, Heading, VStack, Spinner, Alert, Button, Flex, Image } from '@chakra-ui/react';
+import { Box, Container, Heading, VStack, Spinner, Alert, Button, Flex, Image, Grid } from '@chakra-ui/react';
 import { Icon } from '@chakra-ui/react';
 import { MdError } from 'react-icons/md';
 import ApiKeyInput from './components/ApiKeyInput';
@@ -46,6 +46,16 @@ function App() {
     setApiKey(key);
   };
   
+  const handleClearApiKey = () => {
+    sessionStorage.removeItem('lm_api_key');
+    setApiKey(null);
+    setAccounts([]);
+    setRecurringItems([]);
+    setSelectedAccountId(null);
+    setProjection(null);
+    setError(null);
+  };
+
   const handleGenerateProjection = useCallback(() => {
     if(selectedAccountId && projectionHorizon) {
         const projectionData = projectCashFlow(accounts, recurringItems, selectedAccountId, projectionHorizon);
@@ -67,11 +77,19 @@ function App() {
 
   return (
     <Container maxW="container.xl" p={4}>
-      <VStack spacing={8}>
+      <Grid templateColumns="1fr auto 1fr" alignItems="center" w="100%" mb={4}>
+        <Box></Box>
         <Flex align="center" justify="center">
           <Image src="/logo/favicon-32x32.png" alt="CashFlow Logo" boxSize="32px" mr={2} />
           <Heading as="h1" size="xl">LunchMoney Cash Flow Projector</Heading>
         </Flex>
+        {apiKey && (
+          <Flex justifyContent="flex-end">
+            <Button colorScheme='red' onClick={handleClearApiKey}>Clear API Key</Button>
+          </Flex>
+        )}
+      </Grid>
+      <VStack spacing={8} w="100%">
         {!apiKey ? (
           <ApiKeyInput onApiKeySubmit={handleApiKeySubmit} />
         ) : (
