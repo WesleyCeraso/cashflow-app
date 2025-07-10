@@ -12,17 +12,12 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
 
   recurringItems.forEach(item => {
     if (item.asset_id === selectedAccount.id || item.plaid_account_id === selectedAccount.id) {
-      // Map cadence to RRule frequency
       let freq;
-      switch (item.cadence) {
-        case 'daily': freq = RRule.DAILY; break;
-        case 'weekly': freq = RRule.WEEKLY; break;
-        case 'every 2 weeks': freq = RRule.WEEKLY; break; // interval will be 2
-        case 'monthly': freq = RRule.MONTHLY; break;
-        case 'every 2 months': freq = RRule.MONTHLY; break; // interval will be 2
-        case 'every 3 months': freq = RRule.MONTHLY; break; // interval will be 3
-        case 'twice a year': freq = RRule.MONTHLY; break; // interval will be 6
-        case 'yearly': freq = RRule.YEARLY; break;
+      switch (item.granularity) {
+        case 'day': freq = RRule.DAILY; break;
+        case 'week': freq = RRule.WEEKLY; break;
+        case 'month': freq = RRule.MONTHLY; break;
+        case 'year': freq = RRule.YEARLY; break;
         default: return; // Skip if cadence is not recognized
       }
 
@@ -36,7 +31,7 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
         interval: item.quantity || 1,
       };
       
-      if (freq === RRule.MONTHLY || freq === RRule.YEARLY) {
+      if (freq === RRule.MONTHLY) {
         const dtstartDay = dtstart.getUTCDate();
         if (dtstartDay >= 29) { // If the start day is 29, 30, or 31
           ruleOptions.bymonthday = [28, 29, 30, 31];
@@ -54,12 +49,20 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
       const occurrences = rule.between(projectionStartDate, projectionEndDate);
 
       occurrences.forEach(date => {
-        projectedTransactions.push({
-          date: formatISO(date, { representation: 'date' }),
-          amount: -parseFloat(item.amount),
-          description: item.payee || 'Recurring Transaction',
-          is_income: item.is_income
-        });
+        const formattedDate = formatISO(date, { representation: 'date' });
+
+        // Check if this projected occurrence has already happened
+        // Assuming item.occurrences is an array of objects, each with a 'date' property
+        const hasOccurred = item.occurrences && item.occurrences[formattedDate] && item.occurrences[formattedDate].length > 0;
+
+        if (!hasOccurred) {
+          projectedTransactions.push({
+            date: formattedDate,
+            amount: -parseFloat(item.amount),
+            description: item.payee || 'Recurring Transaction',
+            is_income: item.is_income
+          });
+        }
       });
     }
   });
