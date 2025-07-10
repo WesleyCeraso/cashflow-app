@@ -10,7 +10,7 @@ const NegativeBalanceAlerts = ({ alerts }) => {
             <div key={index} style={{ border: '1px solid red', padding: '8px', marginBottom: '8px' }}>
                 <Box flex="1">
                     <h3>Potential Negative Balance on {alert.date}</h3>
-                    <p>Balance will be ${alert.balance.toFixed(2)} after "{alert.transaction.description}".</p>
+                    <p>Daily Balance: ${alert.balance.toFixed(2)} - Occurred after "{alert.transaction.description}".</p>
                 </Box>
             </div>
         ))}

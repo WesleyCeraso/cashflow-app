@@ -84,7 +84,7 @@ function App() {
             )}
             {projection && (
                 <VStack spacing={4} w="100%">
-                    <CashFlowChart data={chartData} />
+                    <CashFlowChart data={chartData} keyEvents={projection.keyEvents} />
                     <NegativeBalanceAlerts alerts={projection.negativeBalanceAlerts} />
                     <KeyEvents events={projection.keyEvents} />
                 </VStack>

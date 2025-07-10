@@ -20,7 +20,7 @@ ChartJS.register(
   Legend
 );
 
-const CashFlowChart = ({ data }) => {
+const CashFlowChart = ({ data, keyEvents }) => {
   const options = {
     responsive: true,
     plugins: {
@@ -31,6 +31,35 @@ const CashFlowChart = ({ data }) => {
         display: true,
         text: 'Cash Flow Projection',
       },
+      tooltip: {
+        callbacks: {
+          title: function(context) {
+            return context[0].label;
+          },
+          label: function(context) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.y !== null) {
+              label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+            }
+            return label;
+          },
+          afterLabel: function(context) {
+            const date = context.label;
+            const transactionsForDate = keyEvents.filter(event => event.date === date && !event.is_subtotal);
+            if (transactionsForDate.length > 0) {
+              let details = ['', 'Transactions:'];
+              transactionsForDate.forEach(transaction => {
+                details.push(`${transaction.description}: ${transaction.amount > 0 ? '+' : ''}${parseFloat(transaction.amount).toFixed(2)}`);
+              });
+              return details;
+            }
+            return '';
+          }
+        }
+      }
     },
   };
 

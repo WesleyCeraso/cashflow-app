@@ -7,6 +7,9 @@ export default defineConfig({
   server: {
     allowedHosts: ["dev.leycera.dedyn.io"],
     host: '0.0.0.0',
-    hmr: false,
+    hmr: {
+      protocol: 'wss',
+      clientPort: 443,
+    },
   }
 })
