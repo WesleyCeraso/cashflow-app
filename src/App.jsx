@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Box, Container, Heading, VStack, Spinner, Alert, Button } from '@chakra-ui/react';
+import { Box, Container, Heading, VStack, Spinner, Alert, Button, Flex, Image } from '@chakra-ui/react';
 import { Icon } from '@chakra-ui/react';
 import { MdError } from 'react-icons/md';
 import ApiKeyInput from './components/ApiKeyInput';
@@ -68,7 +68,10 @@ function App() {
   return (
     <Container maxW="container.xl" p={4}>
       <VStack spacing={8}>
-        <Heading as="h1" size="xl">LunchMoney Cash Flow Projector</Heading>
+        <Flex align="center" justify="center">
+          <Image src="/logo/favicon-32x32.png" alt="CashFlow Logo" boxSize="32px" mr={2} />
+          <Heading as="h1" size="xl">LunchMoney Cash Flow Projector</Heading>
+        </Flex>
         {!apiKey ? (
           <ApiKeyInput onApiKeySubmit={handleApiKeySubmit} />
         ) : (
