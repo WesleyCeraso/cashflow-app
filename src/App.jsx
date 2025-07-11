@@ -13,7 +13,7 @@ import { getAccounts, getRecurringItems, getPlaidAccounts } from './lunchmoney';
 import { projectCashFlow } from './projection';
 
 function App() {
-  const [apiKey, setApiKey] = useState(sessionStorage.getItem('lm_api_key'));
+  const [apiKey, setApiKey] = useState(localStorage.getItem('lm_api_key'));
   const [accounts, setAccounts] = useState([]);
   const [recurringItems, setRecurringItems] = useState([]);
   const [selectedAccountId, setSelectedAccountId] = useState(null);
@@ -45,12 +45,12 @@ function App() {
   }, [apiKey]);
 
   const handleApiKeySubmit = (key) => {
-    sessionStorage.setItem('lm_api_key', key);
+    localStorage.setItem('lm_api_key', key);
     setApiKey(key);
   };
   
   const handleClearApiKey = () => {
-    sessionStorage.removeItem('lm_api_key');
+    localStorage.removeItem('lm_api_key');
     setApiKey(null);
     setAccounts([]);
     setRecurringItems([]);
