@@ -33,7 +33,6 @@ function App() {
         .then(([accountsData, recurringItemsData, plaidAccountsData]) => {
           console.log('Raw Plaid accounts data:', plaidAccountsData);
           const allAccounts = [...accountsData.assets, ...plaidAccountsData.plaid_accounts];
-          console.log('All combined accounts:', allAccounts);
           setAccounts(allAccounts);
           setRecurringItems(recurringItemsData || []);
         })

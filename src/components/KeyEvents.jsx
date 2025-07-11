@@ -29,7 +29,6 @@ const KeyEvents = ({ events }) => {
               if (event.is_subtotal) {
                 const parsedDate = parseISO(event.date);
                 displayDate = format(lastDayOfMonth(parsedDate), 'yyyy-MM-dd');
-                console.log(`Subtotal: Original Date: ${event.date}, Parsed Date: ${parsedDate}, Display Date: ${displayDate}`);
               }
 
               return (
