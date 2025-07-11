@@ -39,7 +39,7 @@ function App() {
         })
         .catch(err => {
           console.error('Error fetching data:', err);
-          setError('Error fetching data from LunchMoney. Please check your API key.');
+          setError('Error fetching data from Lunch Money. Please check your API key.');
         })
         .finally(() => setLoading(false));
     }
@@ -84,8 +84,8 @@ function App() {
       <Box as="header" bg={headerBg} py={4} px={8} boxShadow="md">
         <Flex justify="space-between" align="center">
           <Flex align="center">
-            <Image src="/logo/favicon-32x32.png" alt="CashFlow Logo" boxSize="32px" mr={3} />
-            <Heading as="h1" size="lg">LunchMoney Cash Flow Projector</Heading>
+            <Image src="/logo/favicon-32x32.png" alt="CashFlow Logo" boxSize="48px" mr={3} />
+            <Heading as="h1" size="lg">Lunch Money Cash Flow</Heading>
           </Flex>
           {apiKey && (
             <Button colorScheme='red' onClick={handleClearApiKey}>Clear API Key</Button>

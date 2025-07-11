@@ -9,16 +9,16 @@ const ApiKeyInput = ({ onApiKeySubmit }) => {
     if (apiKey) {
       onApiKeySubmit(apiKey);
     } else {
-      alert('Please enter your LunchMoney API key.');
+      alert('Please enter your Lunch Money API key.');
     }
   };
 
   return (
     <Box p={8} bg={bg} borderRadius="lg" boxShadow="md" w="100%" maxW="md">
       <VStack spacing={6}>
-        <Text fontSize="lg" fontWeight="semibold">Enter your LunchMoney API Key</Text>
+        <Text fontSize="lg" fontWeight="semibold">Enter your Lunch Money API Key</Text>
         <Input 
-          placeholder='Your LunchMoney API Key' 
+          placeholder='Your Lunch Money API Key' 
           value={apiKey} 
           onChange={(e) => setApiKey(e.target.value)} 
           size="lg"
