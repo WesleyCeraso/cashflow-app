@@ -1,4 +1,5 @@
 import { Box, Heading } from '@chakra-ui/react';
+import { formatCurrency } from '../utils';
 
 const KeyEvents = ({ events }) => {
   return (
@@ -31,18 +32,18 @@ const KeyEvents = ({ events }) => {
                 )}
                 <td style={{ padding: '8px' }}>{event.description}</td>
                 <td style={{ padding: '8px', textAlign: 'right' }}>
-                  {event.is_subtotal && event.monthlyCredit !== undefined ? `+${event.monthlyCredit.toFixed(2)}` : (event.amount > 0 ? `+${event.amount.toFixed(2)}` : '')}
+                  {event.is_subtotal && event.monthlyCredit !== undefined ? `+${formatCurrency(event.monthlyCredit)}` : (event.amount > 0 ? `+${formatCurrency(event.amount)}` : '')}
                 </td>
                 <td style={{ padding: '8px', textAlign: 'right' }}>
-                  {event.is_subtotal && event.monthlyDebit !== undefined ? `-${Math.abs(event.monthlyDebit).toFixed(2)}` : (event.amount < 0 ? `-${Math.abs(event.amount).toFixed(2)}` : '')}
+                  {event.is_subtotal && event.monthlyDebit !== undefined ? `-${formatCurrency(Math.abs(event.monthlyDebit))}` : (event.amount < 0 ? `-${formatCurrency(Math.abs(event.amount))}` : '')}
                 </td>
                 {isNewDay && !event.is_subtotal && (
                   <td style={{ padding: '8px', textAlign: 'right' }} rowSpan={dailyEventsCount}>
-                    ${events.filter(e => e.date === event.date && !e.is_subtotal).pop()?.balance.toFixed(2)}
+                    {formatCurrency(events.filter(e => e.date === event.date && !e.is_subtotal).pop()?.balance)}
                   </td>
                 )}
                 {event.is_subtotal && (
-                  <td style={{ padding: '8px', textAlign: 'right' }}>${event.balance.toFixed(2)}</td>
+                  <td style={{ padding: '8px', textAlign: 'right' }}>{formatCurrency(event.balance)}</td>
                 )}
               </tr>
             );

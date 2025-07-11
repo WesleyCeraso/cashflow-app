@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { formatCurrency } from '../utils';
 
 ChartJS.register(
   CategoryScale,
@@ -52,7 +53,7 @@ const CashFlowChart = ({ data, keyEvents }) => {
             if (transactionsForDate.length > 0) {
               let details = ['', 'Transactions:'];
               transactionsForDate.forEach(transaction => {
-                details.push(`${transaction.description}: ${transaction.amount > 0 ? '+' : ''}${parseFloat(transaction.amount).toFixed(2)}`);
+                details.push(`${transaction.description}: ${transaction.amount > 0 ? '+' : ''}${formatCurrency(parseFloat(transaction.amount))}`);
               });
               return details;
             }
