@@ -8,6 +8,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from 'chart.js';
 import { Box, Heading, useColorModeValue } from '@chakra-ui/react';
 import { formatCurrency } from '../utils';
@@ -19,11 +20,16 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 const CashFlowChart = ({ data, keyEvents }) => {
   const bg = useColorModeValue('white', 'gray.700');
+  const positiveFillColor = useColorModeValue('rgba(66, 153, 225, 0.2)', 'rgba(144, 205, 244, 0.2)');
+  const negativeFillColor = useColorModeValue('rgba(229, 62, 62, 0.2)', 'rgba(235, 100, 100, 0.2)');
+  const positiveBorderColor = useColorModeValue('#4299E1', '#90CDF4');
+  const negativeBorderColor = useColorModeValue('rgb(229, 62, 62)', 'rgb(235, 100, 100)');
 
   const options = {
     responsive: true,
@@ -66,10 +72,43 @@ const CashFlowChart = ({ data, keyEvents }) => {
     },
   };
 
+  const chartData = {
+    labels: data.labels,
+    datasets: data.datasets.map(dataset => ({
+      ...dataset,
+      fill: {
+        target: 'origin',
+        above: positiveFillColor,
+        below: negativeFillColor,
+      },
+      segment: {
+        borderColor: useColorModeValue('#A0AEC0', '#718096'), // Neutral gray color
+      },
+      pointBackgroundColor: context => {
+        const value = context.parsed && context.parsed.y !== undefined ? context.parsed.y : 0;
+        return value >= 0 ? positiveBorderColor : negativeBorderColor;
+      },
+      pointBorderColor: context => {
+        const value = context.parsed && context.parsed.y !== undefined ? context.parsed.y : 0;
+        return value >= 0 ? positiveBorderColor : negativeBorderColor;
+      },
+      pointRadius: context => {
+        const date = context.chart.data.labels[context.dataIndex];
+        const hasTransactions = keyEvents.some(event => event.date === date && !event.is_subtotal);
+        return hasTransactions ? 3 : 0;
+      },
+      pointHitRadius: context => {
+        const date = context.chart.data.labels[context.dataIndex];
+        const hasTransactions = keyEvents.some(event => event.date === date && !event.is_subtotal);
+        return hasTransactions ? 3 : 0;
+      },
+    })),
+  };
+
   return (
     <Box w="100%" bg={bg} borderRadius="lg" boxShadow="md" p={6}>
       <Heading size="lg" mb={4}>Cash Flow Projection</Heading>
-      <Line options={options} data={data} />
+      <Line options={options} data={chartData} key={JSON.stringify(chartData.datasets)} />
     </Box>
   );
 };
