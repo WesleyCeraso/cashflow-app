@@ -8,6 +8,7 @@ import ProjectionHorizonSelector from './components/ProjectionHorizonSelector';
 import CashFlowChart from './components/CashFlowChart';
 import KeyEvents from './components/KeyEvents';
 import NegativeBalanceAlerts from './components/NegativeBalanceAlerts';
+import LegalNotice from './components/LegalNotice';
 import { getAccounts, getRecurringItems, getPlaidAccounts } from './lunchmoney';
 import { projectCashFlow } from './projection';
 
@@ -113,6 +114,9 @@ function App() {
           </VStack>
         )}
       </VStack>
+      <Box as="footer" mt={8} textAlign="center">
+        <LegalNotice />
+      </Box>
     </Container>
   );
 }
