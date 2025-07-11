@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Box, Container, Heading, VStack, Spinner, Alert, Button, Flex, Image, Grid } from '@chakra-ui/react';
+import { Box, Container, Heading, VStack, Spinner, Alert, Button, Flex, Image, Grid, useColorModeValue } from '@chakra-ui/react';
 import { Icon } from '@chakra-ui/react';
 import { MdError } from 'react-icons/md';
 import ApiKeyInput from './components/ApiKeyInput';
@@ -21,6 +21,9 @@ function App() {
   const [projection, setProjection] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const bg = useColorModeValue('brand.100', 'brand.900');
+  const headerBg = useColorModeValue('brand.200', 'brand.800');
 
   useEffect(() => {
     if (apiKey) {
@@ -77,47 +80,50 @@ function App() {
   } : null;
 
   return (
-    <Container maxW="container.xl" p={4}>
-      <Grid templateColumns="1fr auto 1fr" alignItems="center" w="100%" mb={4}>
-        <Box></Box>
-        <Flex align="center" justify="center">
-          <Image src="/logo/favicon-32x32.png" alt="CashFlow Logo" boxSize="32px" mr={2} />
-          <Heading as="h1" size="xl">LunchMoney Cash Flow Projector</Heading>
-        </Flex>
-        {apiKey && (
-          <Flex justifyContent="flex-end">
-            <Button colorScheme='red' onClick={handleClearApiKey}>Clear API Key</Button>
+    <Box bg={bg} minH="100vh">
+      <Box as="header" bg={headerBg} py={4} px={8} boxShadow="md">
+        <Flex justify="space-between" align="center">
+          <Flex align="center">
+            <Image src="/logo/favicon-32x32.png" alt="CashFlow Logo" boxSize="32px" mr={3} />
+            <Heading as="h1" size="lg">LunchMoney Cash Flow Projector</Heading>
           </Flex>
-        )}
-      </Grid>
-      <VStack spacing={8} w="100%">
-        {!apiKey ? (
-          <ApiKeyInput onApiKeySubmit={handleApiKeySubmit} />
-        ) : (
-          <VStack spacing={4} w="100%">
-            {loading && <Spinner />}
-            {error && <Alert status='error'><Icon as={MdError} mr={2} />{error}</Alert>}
-            {accounts.length > 0 && (
-              <>
-                <AccountSelector accounts={accounts} onAccountSelect={setSelectedAccountId} />
-                <ProjectionHorizonSelector onHorizonSelect={setProjectionHorizon} />
-                <Button colorScheme='blue' onClick={handleGenerateProjection}>Generate Projection</Button>
-              </>
-            )}
-            {projection && (
-                <VStack spacing={4} w="100%">
-                    <CashFlowChart data={chartData} keyEvents={projection.keyEvents} />
-                    <NegativeBalanceAlerts alerts={projection.negativeBalanceAlerts} />
-                    <KeyEvents events={projection.keyEvents} />
-                </VStack>
-            )}
-          </VStack>
-        )}
-      </VStack>
-      <Box as="footer" mt={8} textAlign="center">
+          {apiKey && (
+            <Button colorScheme='red' onClick={handleClearApiKey}>Clear API Key</Button>
+          )}
+        </Flex>
+      </Box>
+
+      <Container maxW="container.xl" p={8}>
+        <VStack spacing={8} w="100%">
+          {!apiKey ? (
+            <ApiKeyInput onApiKeySubmit={handleApiKeySubmit} />
+          ) : (
+            <VStack spacing={8} w="100%">
+              {loading && <Spinner size="xl" />}
+              {error && <Alert status='error'><Icon as={MdError} mr={2} />{error}</Alert>}
+              {accounts.length > 0 && (
+                <>
+                  <AccountSelector accounts={accounts} onAccountSelect={setSelectedAccountId} />
+                  <ProjectionHorizonSelector onHorizonSelect={setProjectionHorizon} />
+                  <Button colorScheme='blue' onClick={handleGenerateProjection} size="lg">Generate Projection</Button>
+                </>
+              )}
+              {projection && (
+                  <VStack spacing={8} w="100%">
+                      <CashFlowChart data={chartData} keyEvents={projection.keyEvents} />
+                      <NegativeBalanceAlerts alerts={projection.negativeBalanceAlerts} />
+                      <KeyEvents events={projection.keyEvents} />
+                  </VStack>
+              )}
+            </VStack>
+          )}
+        </VStack>
+      </Container>
+
+      <Box as="footer" py={8} px={8} mt={8} textAlign="center">
         <LegalNotice />
       </Box>
-    </Container>
+    </Box>
   );
 }
 

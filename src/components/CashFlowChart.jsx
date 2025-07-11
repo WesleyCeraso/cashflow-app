@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { Box, Heading, useColorModeValue } from '@chakra-ui/react';
 import { formatCurrency } from '../utils';
 
 ChartJS.register(
@@ -22,6 +23,8 @@ ChartJS.register(
 );
 
 const CashFlowChart = ({ data, keyEvents }) => {
+  const bg = useColorModeValue('white', 'gray.700');
+
   const options = {
     responsive: true,
     plugins: {
@@ -29,8 +32,7 @@ const CashFlowChart = ({ data, keyEvents }) => {
         position: 'top',
       },
       title: {
-        display: true,
-        text: 'Cash Flow Projection',
+        display: false, // Hide default title, use Chakra Heading instead
       },
       tooltip: {
         callbacks: {
@@ -43,7 +45,7 @@ const CashFlowChart = ({ data, keyEvents }) => {
               label += ': ';
             }
             if (context.parsed.y !== null) {
-              label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+              label += formatCurrency(context.parsed.y);
             }
             return label;
           },
@@ -64,7 +66,12 @@ const CashFlowChart = ({ data, keyEvents }) => {
     },
   };
 
-  return <Line options={options} data={data} />;
+  return (
+    <Box w="100%" bg={bg} borderRadius="lg" boxShadow="md" p={6}>
+      <Heading size="lg" mb={4}>Cash Flow Projection</Heading>
+      <Line options={options} data={data} />
+    </Box>
+  );
 };
 
 export default CashFlowChart;

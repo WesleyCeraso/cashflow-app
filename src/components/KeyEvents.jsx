@@ -1,55 +1,58 @@
-import { Box, Heading } from '@chakra-ui/react';
+import { Box, Heading, Table, Thead, Tbody, Tr, Th, Td, useColorModeValue } from '@chakra-ui/react';
 import { formatCurrency } from '../utils';
 
 const KeyEvents = ({ events }) => {
-  return (
-    <Box w="100%">
-      <Heading size="md" mb={4}>Key Events</Heading>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ borderBottom: '1px solid #ccc' }}>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Date</th>
-            <th style={{ padding: '8px', textAlign: 'left' }}>Name</th>
-            <th style={{ padding: '8px', textAlign: 'right' }}>Credit</th>
-            <th style={{ padding: '8px', textAlign: 'right' }}>Debit</th>
-            <th style={{ padding: '8px', textAlign: 'right' }}>Balance</th>
-          </tr>
-        </thead>
-        <tbody>
-          {events.map((event, index) => {
-            const isNewDay = index === 0 || event.date !== events[index - 1].date;
-            const dailyEventsCount = events.filter(e => e.date === event.date && !e.is_subtotal).length;
-            const nextEvent = events[index + 1];
-            const isLastEventOfDay = !nextEvent || nextEvent.date !== event.date;
+  const bg = useColorModeValue('white', 'gray.700');
+  const headerBg = useColorModeValue('gray.100', 'gray.600');
 
-            return (
-              <tr key={index} style={{ borderBottom: '1px solid #eee', fontWeight: event.is_subtotal ? 'bold' : 'normal', background: event.is_subtotal ? '#777' : 'none' }}>
-                {isNewDay && !event.is_subtotal && (
-                  <td style={{ padding: '8px' }} rowSpan={events.filter(e => e.date === event.date && !e.is_subtotal).length}>{event.date}</td>
-                )}
-                {event.is_subtotal && (
-                  <td style={{ padding: '8px' }}>{event.date}</td>
-                )}
-                <td style={{ padding: '8px' }}>{event.description}</td>
-                <td style={{ padding: '8px', textAlign: 'right' }}>
-                  {event.is_subtotal && event.monthlyCredit !== undefined ? `+${formatCurrency(event.monthlyCredit)}` : (event.amount > 0 ? `+${formatCurrency(event.amount)}` : '')}
-                </td>
-                <td style={{ padding: '8px', textAlign: 'right' }}>
-                  {event.is_subtotal && event.monthlyDebit !== undefined ? `-${formatCurrency(Math.abs(event.monthlyDebit))}` : (event.amount < 0 ? `-${formatCurrency(Math.abs(event.amount))}` : '')}
-                </td>
-                {isNewDay && !event.is_subtotal && (
-                  <td style={{ padding: '8px', textAlign: 'right' }} rowSpan={dailyEventsCount}>
-                    {formatCurrency(events.filter(e => e.date === event.date && !e.is_subtotal).pop()?.balance)}
-                  </td>
-                )}
-                {event.is_subtotal && (
-                  <td style={{ padding: '8px', textAlign: 'right' }}>{formatCurrency(event.balance)}</td>
-                )}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+  return (
+    <Box w="100%" bg={bg} borderRadius="lg" boxShadow="md" p={6}>
+      <Heading size="lg" mb={4}>Key Events</Heading>
+      <Box overflowX="auto">
+        <Table variant="simple">
+          <Thead>
+            <Tr bg={headerBg}>
+              <Th>Date</Th>
+              <Th>Name</Th>
+              <Th isNumeric>Credit</Th>
+              <Th isNumeric>Debit</Th>
+              <Th isNumeric>Balance</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {events.map((event, index) => {
+              const isNewDay = index === 0 || event.date !== events[index - 1].date;
+              const dailyEventsCount = events.filter(e => e.date === event.date && !e.is_subtotal).length;
+
+              return (
+                <Tr key={index} fontWeight={event.is_subtotal ? 'bold' : 'normal'} bg={event.is_subtotal ? headerBg : 'transparent'}>
+                  {isNewDay && !event.is_subtotal && (
+                    <Td rowSpan={dailyEventsCount}>{event.date}</Td>
+                  )}
+                  {event.is_subtotal && (
+                    <Td>{event.date}</Td>
+                  )}
+                  <Td>{event.description}</Td>
+                  <Td isNumeric color="green.500">
+                    {event.is_subtotal && event.monthlyCredit !== undefined ? `+${formatCurrency(event.monthlyCredit)}` : (event.amount > 0 ? `+${formatCurrency(event.amount)}` : '')}
+                  </Td>
+                  <Td isNumeric color="red.500">
+                    {event.is_subtotal && event.monthlyDebit !== undefined ? `-${formatCurrency(Math.abs(event.monthlyDebit))}` : (event.amount < 0 ? `-${formatCurrency(Math.abs(event.amount))}` : '')}
+                  </Td>
+                  {isNewDay && !event.is_subtotal && (
+                    <Td isNumeric rowSpan={dailyEventsCount}>
+                      {formatCurrency(events.filter(e => e.date === event.date && !e.is_subtotal).pop()?.balance)}
+                    </Td>
+                  )}
+                  {event.is_subtotal && (
+                    <Td isNumeric>{formatCurrency(event.balance)}</Td>
+                  )}
+                </Tr>
+              );
+            })}
+          </Tbody>
+        </Table>
+      </Box>
     </Box>
   );
 };
