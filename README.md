@@ -4,6 +4,10 @@
 
 The CashFlow App is a web-based tool designed to help users visualize and project their financial cash flow. By integrating with Lunch Money API, it provides an interactive chart to display income, expenses, and future balance projections, helping users make informed financial decisions.
 
+Here are some screenshots of the application in action:
+![Main View](images/screenshot_1.png)
+![Negative Balance Alerts And Key Events](images/screenshot_2.png)
+
 ## Features
 
 - **Interactive Cash Flow Chart**: Visualize your financial trajectory with a dynamic and customizable chart.
