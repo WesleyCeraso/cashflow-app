@@ -84,7 +84,7 @@ function App() {
       <Box as="header" bg={headerBg} py={4} px={8} boxShadow="md">
         <Flex justify="space-between" align="center">
           <Flex align="center">
-            <Image src="/logo/favicon-32x32.png" alt="CashFlow Logo" boxSize="48px" mr={3} />
+            <Image src="./logo/favicon-32x32.png" alt="CashFlow Logo" boxSize="48px" mr={3} />
             <Heading as="h1" size="lg">Lunch Money Cash Flow</Heading>
           </Flex>
           {apiKey && (
