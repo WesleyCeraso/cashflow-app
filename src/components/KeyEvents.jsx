@@ -12,11 +12,11 @@ const KeyEvents = ({ events }) => {
         <Table variant="simple">
           <Thead>
             <Tr bg={headerBg}>
-              <Th>Date</Th>
-              <Th>Name</Th>
-              <Th isNumeric>Credit</Th>
-              <Th isNumeric>Debit</Th>
-              <Th isNumeric>Balance</Th>
+              <Th p={2}>Date</Th>
+              <Th p={2}>Name</Th>
+              <Th p={2} isNumeric>Credit</Th>
+              <Th p={2} isNumeric>Debit</Th>
+              <Th p={2} isNumeric>Balance</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -27,25 +27,25 @@ const KeyEvents = ({ events }) => {
               return (
                 <Tr key={index} fontWeight={event.is_subtotal ? 'bold' : 'normal'} bg={event.is_subtotal ? headerBg : 'transparent'}>
                   {isNewDay && !event.is_subtotal && (
-                    <Td rowSpan={dailyEventsCount}>{event.date}</Td>
+                    <Td p={2} rowSpan={dailyEventsCount} whiteSpace="nowrap">{event.date}</Td>
                   )}
                   {event.is_subtotal && (
-                    <Td>{event.date}</Td>
+                    <Td p={2} whiteSpace="nowrap">{event.date}</Td>
                   )}
-                  <Td>{event.description}</Td>
-                  <Td isNumeric color="green.500">
+                  <Td p={2}>{event.description}</Td>
+                  <Td p={2} isNumeric color="green.500">
                     {event.is_subtotal && event.monthlyCredit !== undefined ? `+${formatCurrency(event.monthlyCredit)}` : (event.amount > 0 ? `+${formatCurrency(event.amount)}` : '')}
                   </Td>
-                  <Td isNumeric color="red.500">
+                  <Td p={2} isNumeric color="red.500">
                     {event.is_subtotal && event.monthlyDebit !== undefined ? `-${formatCurrency(Math.abs(event.monthlyDebit))}` : (event.amount < 0 ? `-${formatCurrency(Math.abs(event.amount))}` : '')}
                   </Td>
                   {isNewDay && !event.is_subtotal && (
-                    <Td isNumeric rowSpan={dailyEventsCount}>
+                    <Td p={2} isNumeric rowSpan={dailyEventsCount}>
                       {formatCurrency(events.filter(e => e.date === event.date && !e.is_subtotal).pop()?.balance)}
                     </Td>
                   )}
                   {event.is_subtotal && (
-                    <Td isNumeric>{formatCurrency(event.balance)}</Td>
+                    <Td p={2} isNumeric>{formatCurrency(event.balance)}</Td>
                   )}
                 </Tr>
               );
