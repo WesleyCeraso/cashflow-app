@@ -1,5 +1,5 @@
-import { RRule } from 'rrule-alt';
-import { addMonths, format, formatISO } from 'date-fns';
+import { RRule } from 'rrule';
+import { format } from 'date-fns';
 
 function generateRangeArray(endValue) {
   const startValue = 28;
@@ -7,12 +7,21 @@ function generateRangeArray(endValue) {
   return Array.from({ length: length }, (_, i) => startValue + i);
 }
 
+function getUTCDateString(date) {
+  const year = date.getUTCFullYear();
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+  const day = date.getUTCDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export const projectCashFlow = (accounts, recurringItems, selectedAccountId, projectionHorizonMonths) => {
   const selectedAccount = accounts.find(acc => acc.id === parseInt(selectedAccountId));
   if (!selectedAccount) return null;
 
   const projectionStartDate = new Date(new Date().toISOString().slice(0,10) + 'T00:00:00Z');
-  const projectionEndDate = addMonths(projectionStartDate, projectionHorizonMonths);
+  const projectionEndDate = new Date(projectionStartDate);
+  projectionEndDate.setUTCMonth(projectionStartDate.getUTCMonth() + projectionHorizonMonths);
+
 
   const projectedTransactions = [];
 
@@ -21,14 +30,19 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
       const dateToUse = item.billing_date;
       const [year, month, day] = dateToUse.split('-').map(Number);
 
-      const dtstart = new Date(Date.UTC(year, month - 1, day)); // Month is 0-indexed in Date.UTC
+      const dtstart = new Date(Date.UTC(year, month - 1, day));
       const ruleOptions = {
         dtstart: dtstart,
         interval: item.quantity || 1,
       };
+
       switch (item.granularity) {
-        case 'day': ruleOptions.freq = RRule.DAILY; break;
-        case 'week': ruleOptions.freq = RRule.WEEKLY; break;
+        case 'day':
+          ruleOptions.freq = RRule.DAILY;
+          break;
+        case 'week':
+          ruleOptions.freq = RRule.WEEKLY;
+          break;
         case 'month':
           ruleOptions.freq = RRule.MONTHLY;
           ruleOptions.bymonthday = day;
@@ -38,12 +52,15 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
           ruleOptions.bymonthday = day;
           ruleOptions.bymonth = month;
           break;
-        default: return; // Skip if cadence is not recognized
+        default:
+          return; // Skip if cadence is not recognized
       }
+
       if (ruleOptions.bymonthday >= 29) { // If the start day is 29, 30, or 31
         ruleOptions.bymonthday = generateRangeArray(ruleOptions.bymonthday);
         ruleOptions.bysetpos = -1; // Take the last day from the set
       }
+
       if (item.cadence === 'twice a month') {
         let secondDate;
         if (day >= 15) {
@@ -60,14 +77,15 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
       }
 
       if (item.end_date) {
-        ruleOptions.until = new Date(item.end_date + 'T23:59:59Z');
+        const [endYear, endMonth, endDay] = item.end_date.split('-').map(Number);
+        ruleOptions.until = new Date(Date.UTC(endYear, endMonth - 1, endDay, 23, 59, 59));
       }
 
       const rule = new RRule(ruleOptions);
       const occurrences = rule.between(projectionStartDate, projectionEndDate);
 
       occurrences.forEach(date => {
-        const formattedDate = formatISO(date, { representation: 'date' });
+        const formattedDate = getUTCDateString(date);
 
         // Check if this projected occurrence has already happened
         // Assuming item.occurrences is an array of objects, each with a 'date' property
@@ -91,7 +109,7 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
   const negativeBalanceAlerts = [];
   const keyEvents = [
     {
-      date: format(projectionStartDate, 'yyyy-MM-dd'),
+      date: getUTCDateString(projectionStartDate),
       description: 'Starting Balance',
       amount: 0,
       is_subtotal: false,
@@ -102,19 +120,22 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
   let monthlyChange = 0;
   let monthlyCredit = 0;
   let monthlyDebit = 0;
-  let currentMonth = projectionStartDate.getMonth();
+  let currentMonth = projectionStartDate.getUTCMonth();
   let lastDayOfMonthBalance = currentBalance;
 
-  for (let d = new Date(projectionStartDate); d <= projectionEndDate; d.setDate(d.getDate() + 1)) {
-    const dateStr = formatISO(d, { representation: 'date' });
-    const dayMonth = d.getMonth();
+  for (let d = new Date(projectionStartDate); d <= projectionEndDate; d.setUTCDate(d.getUTCDate() + 1)) {
+    const dateStr = getUTCDateString(d);
+    const dayMonth = d.getUTCMonth();
 
     // Check for month change
     if (dayMonth !== currentMonth) {
       // Add subtotal for the previous month
+      const prevDay = new Date(d);
+      prevDay.setUTCDate(d.getUTCDate() - 1);
+
       keyEvents.push({
-        date: formatISO(addMonths(d, -1), { representation: 'date' }),
-        description: `Monthly Subtotal (${format(addMonths(d, -1), 'MMMM yyyy')})`,
+        date: getUTCDateString(prevDay),
+        description: `Monthly Subtotal (${format(prevDay, 'MMMM yyyy')})`,
         amount: monthlyChange,
         monthlyCredit: monthlyCredit,
         monthlyDebit: monthlyDebit,
@@ -152,7 +173,7 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
   // Add subtotal for the last month in the projection
   if (monthlyChange !== 0) {
     keyEvents.push({
-      date: formatISO(projectionEndDate, { representation: 'date' }),
+      date: getUTCDateString(projectionEndDate),
       description: `Monthly Subtotal (${format(projectionEndDate, 'MMMM yyyy')})`,
       amount: monthlyChange,
       monthlyCredit: monthlyCredit,
