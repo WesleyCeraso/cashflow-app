@@ -1,6 +1,12 @@
 import { RRule } from 'rrule-alt';
 import { addMonths, format, formatISO } from 'date-fns';
 
+function generateRangeArray(endValue) {
+  const startValue = 28;
+  const length = endValue - startValue + 1;
+  return Array.from({ length: length }, (_, i) => startValue + i);
+}
+
 export const projectCashFlow = (accounts, recurringItems, selectedAccountId, projectionHorizonMonths) => {
   const selectedAccount = accounts.find(acc => acc.id === parseInt(selectedAccountId));
   if (!selectedAccount) return null;
@@ -12,32 +18,44 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
 
   recurringItems.forEach(item => {
     if (item.asset_id === selectedAccount.id || item.plaid_account_id === selectedAccount.id) {
-      let freq;
-      switch (item.granularity) {
-        case 'day': freq = RRule.DAILY; break;
-        case 'week': freq = RRule.WEEKLY; break;
-        case 'month': freq = RRule.MONTHLY; break;
-        case 'year': freq = RRule.YEARLY; break;
-        default: return; // Skip if cadence is not recognized
-      }
-
-      const dateToUse = item.billing_date || item.start_date;
+      const dateToUse = item.billing_date;
       const [year, month, day] = dateToUse.split('-').map(Number);
-      const dtstart = new Date(Date.UTC(year, month - 1, day)); // Month is 0-indexed in Date.UTC
 
+      const dtstart = new Date(Date.UTC(year, month - 1, day)); // Month is 0-indexed in Date.UTC
       const ruleOptions = {
-        freq: freq,
         dtstart: dtstart,
         interval: item.quantity || 1,
       };
-      
-      if (freq === RRule.MONTHLY) {
-        const dtstartDay = dtstart.getUTCDate();
-        if (dtstartDay >= 29) { // If the start day is 29, 30, or 31
-          ruleOptions.bymonthday = [28, 29, 30, 31];
-          ruleOptions.bysetpos = -1; // Take the last day from the set
+      switch (item.granularity) {
+        case 'day': ruleOptions.freq = RRule.DAILY; break;
+        case 'week': ruleOptions.freq = RRule.WEEKLY; break;
+        case 'month':
+          ruleOptions.freq = RRule.MONTHLY;
+          ruleOptions.bymonthday = day;
+          break;
+        case 'year':
+          ruleOptions.freq = RRule.YEARLY;
+          ruleOptions.bymonthday = day;
+          ruleOptions.bymonth = month;
+          break;
+        default: return; // Skip if cadence is not recognized
+      }
+      if (ruleOptions.bymonthday >= 29) { // If the start day is 29, 30, or 31
+        ruleOptions.bymonthday = generateRangeArray(ruleOptions.bymonthday);
+        ruleOptions.bysetpos = -1; // Take the last day from the set
+      }
+      if (item.cadence === 'twice a month') {
+        let secondDate;
+        if (day >= 15) {
+          secondDate = Math.min(15, day - 14)
         } else {
-          ruleOptions.bymonthday = dtstartDay;
+          secondDate = day + 14
+        }
+        if (Array.isArray(ruleOptions.bymonthday)) {
+          ruleOptions.bymonthday.unshift(secondDate)
+          ruleOptions.bysetpos = [1, -1]
+        } else {
+          ruleOptions.bymonthday = [ruleOptions.bymonthday, secondDate]
         }
       }
 
