@@ -27,33 +27,57 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
 
   recurringItems.forEach(item => {
     if (item.asset_id === selectedAccount.id || item.plaid_account_id === selectedAccount.id) {
-      const dateToUse = item.billing_date;
-      const [year, month, day] = dateToUse.split('-').map(Number);
+      let dtstart = projectionStartDate;
+      if (item.start_date) {
+        const [year, month, day] = item.start_date.split('-').map(Number);
+        const start_date = new Date(Date.UTC(year, month - 1, day));
+        if (start_date > dtstart) {
+          dtstart = start_date;
+        }
+      }
 
-      const dtstart = new Date(Date.UTC(year, month - 1, day));
       const ruleOptions = {
         dtstart: dtstart,
         interval: item.quantity || 1,
       };
 
+      const [anchorYear, anchorMonth, anchorDay] = item.billing_date.split('-').map(Number);
+      const anchorDate = new Date(Date.UTC(anchorYear, anchorMonth - 1, anchorDay));
+
       switch (item.granularity) {
         case 'day':
           ruleOptions.freq = RRule.DAILY;
+          // RRule doesn't have a concept of an anchor date, so we adjust dtstart
+          // to be the first occurrence on or after the projection start date.
+          const timeDiff = anchorDate.getTime() - ruleOptions.dtstart.getTime();
+          // Use Math.round to handle potential DST edge cases, although dates are UTC.
+          const daysDiff = Math.round(timeDiff / (1000 * 3600 * 24));
+
+          const interval = ruleOptions.interval;
+          const remainder = daysDiff % interval;
+
+          if (remainder !== 0) {
+            const daysToAdd = remainder;
+            const newStartDate = new Date(ruleOptions.dtstart);
+            newStartDate.setUTCDate(ruleOptions.dtstart.getUTCDate() + daysToAdd);
+            ruleOptions.dtstart = newStartDate;
+          }
           break;
         case 'week':
           ruleOptions.freq = RRule.WEEKLY;
+          ruleOptions.byweekday = dtstart.getUTCDay();
           break;
         case 'month':
           ruleOptions.freq = RRule.MONTHLY;
-          ruleOptions.bymonthday = day;
+          ruleOptions.bymonthday = anchorDay;
           break;
         case 'year':
           ruleOptions.freq = RRule.YEARLY;
-          ruleOptions.bymonthday = day;
-          ruleOptions.bymonth = month;
+          ruleOptions.bymonthday = anchorDay;
+          ruleOptions.bymonth = anchorMonth;
           break;
         default:
-          return; // Skip if cadence is not recognized
+          return; // Skip if granularity is not recognized
       }
 
       if (ruleOptions.bymonthday >= 29) { // If the start day is 29, 30, or 31
@@ -63,10 +87,10 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
 
       if (item.cadence === 'twice a month') {
         let secondDate;
-        if (day >= 15) {
-          secondDate = Math.min(15, day - 14)
+        if (anchorDay >= 15) {
+          secondDate = Math.min(15, anchorDay - 14)
         } else {
-          secondDate = day + 14
+          secondDate = anchorDay + 14
         }
         if (Array.isArray(ruleOptions.bymonthday)) {
           ruleOptions.bymonthday.unshift(secondDate)
