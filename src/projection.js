@@ -65,7 +65,7 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
           break;
         case 'week':
           ruleOptions.freq = RRule.WEEKLY;
-          ruleOptions.byweekday = dtstart.getUTCDay();
+          ruleOptions.byweekday = (anchorDate.getUTCDay() + 6) % 7;
           break;
         case 'month':
           ruleOptions.freq = RRule.MONTHLY;
