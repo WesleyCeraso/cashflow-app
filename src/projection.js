@@ -45,39 +45,73 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
       const anchorDate = new Date(Date.UTC(anchorYear, anchorMonth - 1, anchorDay));
 
       switch (item.granularity) {
-        case 'day':
+        case 'day': {
           ruleOptions.freq = RRule.DAILY;
           // RRule doesn't have a concept of an anchor date, so we adjust dtstart
           // to be the first occurrence on or after the projection start date.
           const timeDiff = anchorDate.getTime() - ruleOptions.dtstart.getTime();
           // Use Math.round to handle potential DST edge cases, although dates are UTC.
           const daysDiff = Math.round(timeDiff / (1000 * 3600 * 24));
-
           const interval = ruleOptions.interval;
           const remainder = daysDiff % interval;
-
           if (remainder !== 0) {
-            const daysToAdd = remainder;
+          const daysToAdd = remainder;
             const newStartDate = new Date(ruleOptions.dtstart);
-            newStartDate.setUTCDate(ruleOptions.dtstart.getUTCDate() + daysToAdd);
+          newStartDate.setUTCDate(ruleOptions.dtstart.getUTCDate() + daysToAdd);
             ruleOptions.dtstart = newStartDate;
           }
           break;
-        case 'week':
+        }
+        case 'week': {
           ruleOptions.freq = RRule.WEEKLY;
           ruleOptions.byweekday = (anchorDate.getUTCDay() + 6) % 7;
+          const timeDiff = anchorDate.getTime() - ruleOptions.dtstart.getTime();
+          const weeksDiff = Math.floor(timeDiff / (1000 * 3600 * 24 * 7));
+          const interval = ruleOptions.interval;
+          const remainder = weeksDiff % interval;
+          if (remainder !== 0) {
+            const weeksToAdd = interval - remainder;
+            const newStartDate = new Date(ruleOptions.dtstart);
+            newStartDate.setUTCDate(ruleOptions.dtstart.getUTCDate() + weeksToAdd * 7);
+            ruleOptions.dtstart = newStartDate;
+          }
           break;
-        case 'month':
+        }
+        case 'month': {
           ruleOptions.freq = RRule.MONTHLY;
           ruleOptions.bymonthday = anchorDay;
+          if (ruleOptions.dtstart < projectionStartDate) {
+            const monthDiff = (anchorDate.getUTCFullYear() - ruleOptions.dtstart.getUTCFullYear()) * 12 + (anchorDate.getUTCMonth() - ruleOptions.dtstart.getUTCMonth());
+            const interval = ruleOptions.interval;
+            const remainder = monthDiff % interval;
+            if (remainder !== 0) {
+              const monthsToAdd = interval - remainder;
+              const newStartDate = new Date(ruleOptions.dtstart);
+              newStartDate.setUTCMonth(ruleOptions.dtstart.getUTCMonth() + monthsToAdd);
+              ruleOptions.dtstart = newStartDate;
+            }
+          }
           break;
-        case 'year':
+        }
+        case 'year': {
           ruleOptions.freq = RRule.YEARLY;
           ruleOptions.bymonthday = anchorDay;
           ruleOptions.bymonth = anchorMonth;
+          if (ruleOptions.dtstart < projectionStartDate) {
+            const yearDiff = projectionStartDate.getUTCFullYear() - ruleOptions.dtstart.getUTCFullYear();
+            const interval = ruleOptions.interval;
+            const remainder = yearDiff % interval;
+            if (remainder !== 0) {
+              const yearsToAdd = interval - remainder;
+              const newStartDate = new Date(ruleOptions.dtstart);
+              newStartDate.setUTCFullYear(ruleOptions.dtstart.getUTCFullYear() + yearDiff + yearsToAdd);
+              ruleOptions.dtstart = newStartDate;
+            }
+          }
           break;
+        }
         default:
-          return; // Skip if granularity is not recognized
+          return; // Skip if cadence is not recognized
       }
 
       if (ruleOptions.bymonthday >= 29) { // If the start day is 29, 30, or 31
