@@ -70,6 +70,11 @@ const CashFlowChart = ({ data, keyEvents }) => {
         }
       }
     },
+    scales: {
+      y: {
+        beginAtZero: true
+      }
+    }
   };
 
   const chartData = {
