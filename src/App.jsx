@@ -11,6 +11,8 @@ import NegativeBalanceAlerts from './components/NegativeBalanceAlerts';
 import LegalNotice from './components/LegalNotice';
 import { getAccounts, getRecurringItems, getPlaidAccounts } from './lunchmoney';
 import { projectCashFlow } from './projection';
+import { getOneOffTransactions, addOneOffTransaction, updateOneOffTransaction, deleteOneOffTransaction } from './oneOffTransactions';
+import OneOffTransactionForm from './components/OneOffTransactionForm';
 
 function App() {
   const [apiKey, setApiKey] = useState(localStorage.getItem('lm_api_key'));
@@ -21,6 +23,8 @@ function App() {
   const [projection, setProjection] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [oneOffTransactions, setOneOffTransactions] = useState([]);
+  const [editingTransaction, setEditingTransaction] = useState(null);
 
   const bg = useColorModeValue('brand.100', 'brand.900');
   const headerBg = useColorModeValue('brand.200', 'brand.800');
@@ -34,6 +38,7 @@ function App() {
           console.log('Raw Plaid accounts data:', plaidAccountsData);
           const allAccounts = [...accountsData.assets, ...plaidAccountsData.plaid_accounts];
           setAccounts(allAccounts);
+          setOneOffTransactions(getOneOffTransactions());
         })
         .catch(err => {
           console.error('Error fetching data:', err);
@@ -57,6 +62,27 @@ function App() {
     setError(null);
   };
 
+  const handleSaveOneOffTransaction = (transaction) => {
+    if (editingTransaction) {
+      updateOneOffTransaction(transaction);
+    } else {
+      addOneOffTransaction(transaction);
+    }
+    setOneOffTransactions(getOneOffTransactions());
+    setEditingTransaction(null);
+    handleGenerateProjection();
+  };
+
+  const handleDeleteOneOffTransaction = (transactionId) => {
+    deleteOneOffTransaction(transactionId);
+    setOneOffTransactions(getOneOffTransactions());
+    handleGenerateProjection();
+  };
+
+  const handleEditOneOffTransaction = (transaction) => {
+    setEditingTransaction(transaction);
+  };
+
   const handleGenerateProjection = useCallback(() => {
     if (selectedAccountId && projectionHorizon) {
       setLoading(true);
@@ -66,7 +92,7 @@ function App() {
 
       getRecurringItems(apiKey, startDate, endDate)
         .then(recurringItemsData => {
-          const projectionData = projectCashFlow(accounts, recurringItemsData, selectedAccountId, projectionHorizon);
+          const projectionData = projectCashFlow(accounts, recurringItemsData, selectedAccountId, projectionHorizon, oneOffTransactions.map(t => ({...t, date: new Date(t.date)})));
           setProjection(projectionData);
         })
         .catch(err => {
@@ -116,13 +142,20 @@ function App() {
                   <AccountSelector accounts={accounts} onAccountSelect={setSelectedAccountId} />
                   <ProjectionHorizonSelector onHorizonSelect={setProjectionHorizon} />
                   <Button colorScheme='blue' onClick={handleGenerateProjection} size="lg">Generate Projection</Button>
+                  <OneOffTransactionForm
+                    onSave={handleSaveOneOffTransaction}
+                    onCancel={() => setEditingTransaction(null)}
+                    transaction={editingTransaction}
+                    accounts={accounts}
+                    selectedAccountId={selectedAccountId}
+                  />
                 </>
               )}
               {projection && (
                   <VStack spacing={8} w="100%">
                       <CashFlowChart data={chartData} keyEvents={projection.keyEvents} />
                       <NegativeBalanceAlerts alerts={projection.negativeBalanceAlerts} />
-                      <KeyEvents events={projection.keyEvents} />
+                      <KeyEvents events={projection.keyEvents} onEdit={handleEditOneOffTransaction} onDelete={handleDeleteOneOffTransaction} />
                   </VStack>
               )}
             </VStack>

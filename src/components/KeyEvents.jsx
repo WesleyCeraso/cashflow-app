@@ -1,7 +1,8 @@
-import { Box, Heading, Table, Thead, Tbody, Tr, Th, Td, useColorModeValue } from '@chakra-ui/react';
+import { Box, Heading, Table, Thead, Tbody, Tr, Th, Td, useColorModeValue, Button } from '@chakra-ui/react';
 import { formatCurrency } from '../utils';
+import { format } from 'date-fns';
 
-const KeyEvents = ({ events }) => {
+const KeyEvents = ({ events, onEdit, onDelete }) => {
   const bg = useColorModeValue('white', 'gray.700');
   const headerBg = useColorModeValue('gray.100', 'gray.600');
 
@@ -17,6 +18,7 @@ const KeyEvents = ({ events }) => {
               <Th p={2} isNumeric>Credit</Th>
               <Th p={2} isNumeric>Debit</Th>
               <Th p={2} isNumeric>Balance</Th>
+              <Th p={2}>Actions</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -25,12 +27,17 @@ const KeyEvents = ({ events }) => {
               const dailyEventsCount = events.filter(e => e.date === event.date && !e.is_subtotal).length;
 
               return (
-                <Tr key={index} fontWeight={event.is_subtotal ? 'bold' : 'normal'} bg={event.is_subtotal ? headerBg : 'transparent'}>
+                <Tr
+                  key={index}
+                  fontWeight={event.is_subtotal ? 'bold' : 'normal'}
+                  bg={event.is_subtotal ? headerBg : 'transparent'}
+                  color={event.is_one_off ? useColorModeValue('blue.600', 'blue.300') : 'inherit'}
+                >
                   {isNewDay && !event.is_subtotal && (
-                    <Td p={2} rowSpan={dailyEventsCount} whiteSpace="nowrap">{event.date}</Td>
+                    <Td p={2} rowSpan={dailyEventsCount} whiteSpace="nowrap">{format(new Date(event.date), 'yyyy-MM-dd')}</Td>
                   )}
                   {event.is_subtotal && (
-                    <Td p={2} whiteSpace="nowrap">{event.date}</Td>
+                    <Td p={2} whiteSpace="nowrap">{format(new Date(event.date), 'yyyy-MM-dd')}</Td>
                   )}
                   <Td p={2}>{event.description}</Td>
                   <Td p={2} isNumeric color="green.500">
@@ -47,6 +54,14 @@ const KeyEvents = ({ events }) => {
                   {event.is_subtotal && (
                     <Td p={2} isNumeric>{formatCurrency(event.balance)}</Td>
                   )}
+                  <Td p={2}>
+                    {event.is_one_off && (
+                      <>
+                        <Button size="xs" onClick={() => onEdit(event)}>Edit</Button>
+                        <Button size="xs" ml={2} onClick={() => onDelete(event.id)}>Delete</Button>
+                      </>
+                    )}
+                  </Td>
                 </Tr>
               );
             })}

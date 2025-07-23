@@ -9,7 +9,7 @@ function getUTCDateString(date) {
   return `${year}-${month}-${day}`;
 }
 
-export const projectCashFlow = (accounts, recurringItems, selectedAccountId, projectionHorizonMonths) => {
+export const projectCashFlow = (accounts, recurringItems, selectedAccountId, projectionHorizonMonths, oneOffTransactions = []) => {
   const selectedAccount = accounts.find(acc => acc.id === parseInt(selectedAccountId));
   if (!selectedAccount) return null;
 
@@ -18,7 +18,16 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
   projectionEndDate.setUTCMonth(projectionStartDate.getUTCMonth() + projectionHorizonMonths);
 
 
-  const projectedTransactions = [];
+  const projectedTransactions = [
+    ...oneOffTransactions
+      .filter(t => t.account_id === selectedAccount.id)
+      .map(t => ({
+        ...t,
+        amount: parseFloat(t.amount),
+        is_one_off: true,
+        date: getUTCDateString(t.date),
+      })),
+  ];
 
   recurringItems.forEach(item => {
     if (item.asset_id === selectedAccount.id || item.plaid_account_id === selectedAccount.id) {
