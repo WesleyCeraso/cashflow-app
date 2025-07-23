@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { format, lastDayOfMonth } from 'date-fns';
 
 
 
@@ -66,7 +66,7 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
       prevDay.setUTCDate(d.getUTCDate() - 1);
 
       keyEvents.push({
-        date: getUTCDateString(prevDay),
+        date: getUTCDateString(lastDayOfMonth(prevDay)),
         description: `Monthly Subtotal (${format(prevDay, 'MMMM yyyy')})`,
         amount: monthlyChange,
         monthlyCredit: monthlyCredit,
@@ -103,17 +103,15 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
   }
 
   // Add subtotal for the last month in the projection
-  if (monthlyChange !== 0) {
-    keyEvents.push({
-      date: getUTCDateString(projectionEndDate),
-      description: `Monthly Subtotal (${format(projectionEndDate, 'MMMM yyyy')})`,
-      amount: monthlyChange,
-      monthlyCredit: monthlyCredit,
-      monthlyDebit: monthlyDebit,
-      is_subtotal: true,
-      balance: currentBalance
-    });
-  }
+  keyEvents.push({
+    date: getUTCDateString(projectionEndDate),
+    description: `Monthly Subtotal (${format(projectionEndDate, 'MMMM yyyy')})`,
+    amount: monthlyChange,
+    monthlyCredit: monthlyCredit,
+    monthlyDebit: monthlyDebit,
+    is_subtotal: true,
+    balance: currentBalance
+  });
 
   return { dailyBalances, keyEvents, negativeBalanceAlerts };
 };

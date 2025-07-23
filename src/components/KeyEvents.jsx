@@ -1,6 +1,5 @@
 import { Box, Heading, Table, Thead, Tbody, Tr, Th, Td, useColorModeValue } from '@chakra-ui/react';
 import { formatCurrency } from '../utils';
-import { lastDayOfMonth, format, parseISO } from 'date-fns';
 
 const KeyEvents = ({ events }) => {
   const bg = useColorModeValue('white', 'gray.700');
@@ -25,19 +24,13 @@ const KeyEvents = ({ events }) => {
               const isNewDay = index === 0 || event.date !== events[index - 1].date;
               const dailyEventsCount = events.filter(e => e.date === event.date && !e.is_subtotal).length;
 
-              let displayDate = event.date;
-              if (event.is_subtotal) {
-                const parsedDate = parseISO(event.date);
-                displayDate = format(lastDayOfMonth(parsedDate), 'yyyy-MM-dd');
-              }
-
               return (
                 <Tr key={index} fontWeight={event.is_subtotal ? 'bold' : 'normal'} bg={event.is_subtotal ? headerBg : 'transparent'}>
                   {isNewDay && !event.is_subtotal && (
                     <Td p={2} rowSpan={dailyEventsCount} whiteSpace="nowrap">{event.date}</Td>
                   )}
                   {event.is_subtotal && (
-                    <Td p={2} whiteSpace="nowrap">{displayDate}</Td>
+                    <Td p={2} whiteSpace="nowrap">{event.date}</Td>
                   )}
                   <Td p={2}>{event.description}</Td>
                   <Td p={2} isNumeric color="green.500">
