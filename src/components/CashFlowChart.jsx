@@ -30,12 +30,14 @@ const CashFlowChart = ({ data, keyEvents }) => {
   const negativeFillColor = useColorModeValue('rgba(229, 62, 62, 0.2)', 'rgba(235, 100, 100, 0.2)');
   const positiveBorderColor = useColorModeValue('#4299E1', '#90CDF4');
   const negativeBorderColor = useColorModeValue('rgb(229, 62, 62)', 'rgb(235, 100, 100)');
+  const oneOffPointColor = useColorModeValue('#805AD5', '#D6BCFA'); // Purple for local transactions
 
   const options = {
     responsive: true,
     plugins: {
       legend: {
-        position: 'top',
+        display: false,
+        onClick: null,
       },
       title: {
         display: false, // Hide default title, use Chakra Heading instead
@@ -90,10 +92,20 @@ const CashFlowChart = ({ data, keyEvents }) => {
         borderColor: useColorModeValue('#A0AEC0', '#718096'), // Neutral gray color
       },
       pointBackgroundColor: context => {
+        const date = context.chart.data.labels[context.dataIndex];
+        const isLocal = keyEvents.some(event => event.date === date && event.is_local);
+        if (isLocal) {
+          return oneOffPointColor;
+        }
         const value = context.parsed && context.parsed.y !== undefined ? context.parsed.y : 0;
         return value >= 0 ? positiveBorderColor : negativeBorderColor;
       },
       pointBorderColor: context => {
+        const date = context.chart.data.labels[context.dataIndex];
+        const isLocal = keyEvents.some(event => event.date === date && event.is_local);
+        if (isLocal) {
+          return oneOffPointColor;
+        }
         const value = context.parsed && context.parsed.y !== undefined ? context.parsed.y : 0;
         return value >= 0 ? positiveBorderColor : negativeBorderColor;
       },

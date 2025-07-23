@@ -12,21 +12,37 @@ import NegativeBalanceAlerts from './components/NegativeBalanceAlerts';
 import LegalNotice from './components/LegalNotice';
 import { getAccounts, getRecurringItems, getPlaidAccounts } from './lunchmoney';
 import { projectCashFlow } from './projection';
-import { getOneOffTransactions, addOneOffTransaction, updateOneOffTransaction, deleteOneOffTransaction } from './oneOffTransactions';
-import OneOffTransactionForm from './components/OneOffTransactionForm';
-import OneOffTransactionList from './components/OneOffTransactionList';
+import { getLocalTransactions, addLocalTransaction, updateLocalTransaction, deleteLocalTransaction } from './localTransactions';
+import LocalTransactionForm from './components/LocalTransactionForm';
+import LocalTransactionList from './components/LocalTransactionList';
 
 function App() {
   const [apiKey, setApiKey] = useState(localStorage.getItem('lm_api_key'));
   const [accounts, setAccounts] = useState([]);
   
-  const [selectedAccountId, setSelectedAccountId] = useState(null);
-  const [projectionHorizon, setProjectionHorizon] = useState(3);
+  const [selectedAccountId, setSelectedAccountId] = useState(() => localStorage.getItem('lm_selected_account_id'));
+  const [projectionHorizon, setProjectionHorizon] = useState(() => {
+    const storedHorizon = localStorage.getItem('lm_projection_horizon');
+    return storedHorizon ? parseInt(storedHorizon, 10) : 3;
+  });
   const [projection, setProjection] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (selectedAccountId) {
+      localStorage.setItem('lm_selected_account_id', selectedAccountId);
+    } else {
+      localStorage.removeItem('lm_selected_account_id');
+    }
+  }, [selectedAccountId]);
+
+  useEffect(() => {
+    localStorage.setItem('lm_projection_horizon', projectionHorizon.toString());
+  }, [projectionHorizon]);
   const [error, setError] = useState(null);
-  const [oneOffTransactions, setOneOffTransactions] = useState([]);
+  const [localTransactions, setLocalTransactions] = useState([]);
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [isAddingLocalTransaction, setIsAddingLocalTransaction] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { colorMode, toggleColorMode } = useColorMode();
 
@@ -42,7 +58,14 @@ function App() {
           console.log('Raw Plaid accounts data:', plaidAccountsData);
           const allAccounts = [...accountsData.assets, ...plaidAccountsData.plaid_accounts];
           setAccounts(allAccounts);
-          setOneOffTransactions(getOneOffTransactions());
+          setLocalTransactions(getLocalTransactions());
+
+          const storedAccountId = localStorage.getItem('lm_selected_account_id');
+          if (storedAccountId && allAccounts.some(account => String(account.id) === storedAccountId)) {
+            setSelectedAccountId(storedAccountId);
+          } else if (allAccounts.length > 0) {
+            setSelectedAccountId(String(allAccounts[0].id));
+          }
         })
         .catch(err => {
           console.error('Error fetching data:', err);
@@ -62,30 +85,35 @@ function App() {
     setApiKey(null);
     setAccounts([]);
     setSelectedAccountId(null);
+    localStorage.removeItem('lm_selected_account_id');
     setProjection(null);
     setError(null);
+    localStorage.removeItem('lm_projection_horizon');
+    setLocalTransactions([]);
+    localStorage.removeItem('one_off_transactions');
   };
 
-  const handleSaveOneOffTransaction = (transaction) => {
+  const handleSaveLocalTransaction = (transaction) => {
     if (editingTransaction) {
-      updateOneOffTransaction(transaction);
+      updateLocalTransaction(transaction);
     } else {
-      addOneOffTransaction(transaction);
+      addLocalTransaction(transaction);
     }
-    setOneOffTransactions(getOneOffTransactions());
+    setLocalTransactions(getLocalTransactions());
     setEditingTransaction(null);
     onClose(); // Close modal after saving
     handleGenerateProjection();
   };
 
-  const handleDeleteOneOffTransaction = (transactionId) => {
-    deleteOneOffTransaction(transactionId);
-    setOneOffTransactions(getOneOffTransactions());
+  const handleDeleteLocalTransaction = (transactionId) => {
+    deleteLocalTransaction(transactionId);
+    setLocalTransactions(getLocalTransactions());
     handleGenerateProjection();
   };
 
-  const handleEditOneOffTransaction = (transaction) => {
+  const handleEditLocalTransaction = (transaction) => {
     setEditingTransaction(transaction);
+    setIsAddingLocalTransaction(false);
     onOpen(); // Open modal for editing
   };
 
@@ -98,7 +126,7 @@ function App() {
 
       getRecurringItems(apiKey, startDate, endDate)
         .then(recurringItemsData => {
-          const projectionData = projectCashFlow(accounts, recurringItemsData, selectedAccountId, projectionHorizon, oneOffTransactions.map(t => ({...t, date: new Date(t.date)})));
+          const projectionData = projectCashFlow(accounts, recurringItemsData, selectedAccountId, projectionHorizon, localTransactions.map(t => ({...t, date: new Date(t.date)})));
           setProjection(projectionData);
         })
         .catch(err => {
@@ -107,7 +135,13 @@ function App() {
         })
         .finally(() => setLoading(false));
     }
-  }, [apiKey, accounts, selectedAccountId, projectionHorizon]);
+  }, [apiKey, accounts, selectedAccountId, projectionHorizon, localTransactions]);
+
+  useEffect(() => {
+    if (selectedAccountId && projectionHorizon && accounts.length > 0) {
+      handleGenerateProjection();
+    }
+  }, [selectedAccountId, projectionHorizon, accounts, handleGenerateProjection]);
 
   const chartData = projection ? {
     labels: projection.dailyBalances.map(d => d.date),
@@ -157,18 +191,18 @@ function App() {
             </ChakraText>
           </VStack>
         ) : (
-          <SimpleGrid columns={{ base: 1 }} templateColumns={{ md: "1fr 2fr" }} spacing={8} w="100%">
+          <SimpleGrid columns={{ base: 1 }} spacing={8} w="100%">
             <VStack spacing={8} w="100%" align="stretch">
               {loading && <Spinner size="xl" />}
               {error && <Alert status='error'><Icon as={MdError} mr={2} />{error}</Alert>}
               {accounts.length > 0 && (
                 <VStack spacing={8} w="100%" align="stretch">
-                  <AccountSelector accounts={accounts} onAccountSelect={setSelectedAccountId} />
-                  <ProjectionHorizonSelector onHorizonSelect={setProjectionHorizon} />
-                  <Button colorScheme='blue' onClick={handleGenerateProjection} size="lg" isDisabled={!selectedAccountId || !projectionHorizon}>Generate Projection</Button>
+                  <AccountSelector accounts={accounts} onAccountSelect={setSelectedAccountId} selectedAccountId={selectedAccountId} />
+                  <ProjectionHorizonSelector onHorizonSelect={setProjectionHorizon} currentHorizon={projectionHorizon} />
+                  
 
-                  <Button onClick={() => { setEditingTransaction(null); onOpen(); }} colorScheme="purple" size="md" mt={4}>
-                    Manage One-Off Transactions
+                  <Button onClick={() => { setEditingTransaction(null); setIsAddingLocalTransaction(false); onOpen(); }} colorScheme="purple" size="md" mt={4}>
+                    Manage Local Transactions
                   </Button>
                 </VStack>
               )}
@@ -182,7 +216,7 @@ function App() {
               <VStack spacing={8} w="100%" align="stretch">
                 <CashFlowChart data={chartData} keyEvents={projection.keyEvents} />
                 <NegativeBalanceAlerts alerts={projection.negativeBalanceAlerts} />
-                <KeyEvents events={projection.keyEvents} onEdit={handleEditOneOffTransaction} onDelete={handleDeleteOneOffTransaction} />
+                <KeyEvents events={projection.keyEvents} />
               </VStack>
             ) : (
               <VStack spacing={8} w="100%" align="center" justify="center" minH="300px" borderWidth="1px" borderRadius="lg" boxShadow="md" bg={useColorModeValue('white', 'gray.700')}>
@@ -198,27 +232,30 @@ function App() {
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>{editingTransaction ? 'Edit' : 'Add'} One-Off Transaction</ModalHeader>
+          <ModalHeader>Manage Local Transactions</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
+            <ChakraText fontSize="sm" color="gray.500" mb={4}>
+              Local transactions are stored only in your browser and are not synced with Lunch Money.
+            </ChakraText>
             <VStack spacing={4} align="stretch">
               <Flex justify="space-between" align="center">
-                <Heading size="md">One-Off Transactions</Heading>
-                <Button size="sm" onClick={() => setEditingTransaction({})}>Add New</Button>
+                <Button size="sm" onClick={() => { setEditingTransaction(null); setIsAddingLocalTransaction(true); }}>Add New</Button>
               </Flex>
-              {editingTransaction ? (
-                <OneOffTransactionForm
-                  onSave={handleSaveOneOffTransaction}
-                  onCancel={() => setEditingTransaction(null)}
+              {isAddingLocalTransaction || editingTransaction ? (
+                <LocalTransactionForm
+                  onSave={handleSaveLocalTransaction}
+                  onCancel={() => { setEditingTransaction(null); setIsAddingLocalTransaction(false); }}
                   transaction={editingTransaction}
                   accounts={accounts}
                   selectedAccountId={selectedAccountId}
+                  isAdding={isAddingLocalTransaction}
                 />
               ) : (
-                <OneOffTransactionList
-                  transactions={oneOffTransactions}
-                  onEdit={handleEditOneOffTransaction}
-                  onDelete={handleDeleteOneOffTransaction}
+                <LocalTransactionList
+                  transactions={localTransactions}
+                  onEdit={handleEditLocalTransaction}
+                  onDelete={handleDeleteLocalTransaction}
                 />
               )}
             </VStack>

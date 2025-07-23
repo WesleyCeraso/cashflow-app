@@ -9,7 +9,7 @@ function getUTCDateString(date) {
   return `${year}-${month}-${day}`;
 }
 
-export const projectCashFlow = (accounts, recurringItems, selectedAccountId, projectionHorizonMonths, oneOffTransactions = []) => {
+export const projectCashFlow = (accounts, recurringItems, selectedAccountId, projectionHorizonMonths, localTransactions = []) => {
   const selectedAccount = accounts.find(acc => acc.id === parseInt(selectedAccountId));
   if (!selectedAccount) return null;
 
@@ -19,12 +19,12 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
 
 
   const projectedTransactions = [
-    ...oneOffTransactions
+    ...localTransactions
       .filter(t => t.account_id === selectedAccount.id)
       .map(t => ({
         ...t,
         amount: parseFloat(t.amount),
-        is_one_off: true,
+        is_local: true,
         date: getUTCDateString(t.date),
       })),
   ];
@@ -99,7 +99,7 @@ export const projectCashFlow = (accounts, recurringItems, selectedAccountId, pro
         } else {
           monthlyDebit += parseFloat(t.amount);
         }
-        keyEvents.push({ ...t, balance: currentBalance });
+        keyEvents.push({ ...t, balance: currentBalance, is_local: t.is_local });
     });
 
     // Check for negative balance after all transactions for the day

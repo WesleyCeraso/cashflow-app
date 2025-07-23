@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Box, Button, FormControl, FormLabel, Input, NumberInput, NumberInputField, Select, Stack, useColorModeValue, Heading } from '@chakra-ui/react';
 
-const OneOffTransactionForm = ({ transaction, onSave, onCancel, accounts, selectedAccountId: propSelectedAccountId }) => {
+const LocalTransactionForm = ({ transaction, onSave, onCancel, accounts, selectedAccountId: propSelectedAccountId, isAdding }) => {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState(0);
   const [date, setDate] = useState('');
@@ -9,20 +9,20 @@ const OneOffTransactionForm = ({ transaction, onSave, onCancel, accounts, select
   const [selectedAccountId, setSelectedAccountId] = useState(propSelectedAccountId || '');
 
   useEffect(() => {
-    if (transaction) {
-      setDescription(transaction.description);
-      setAmount(Math.abs(transaction.amount || 0));
-      setDate(transaction.date);
-      setType(transaction.amount < 0 ? 'expense' : 'income');
-      setSelectedAccountId(transaction.account_id || '');
-    } else {
+    if (isAdding) {
       setDescription('');
       setAmount(0);
       setDate(new Date().toISOString().slice(0, 10));
       setType('expense');
       setSelectedAccountId(propSelectedAccountId || '');
+    } else if (transaction) {
+      setDescription(transaction.description || '');
+      setAmount(Math.abs(transaction.amount || 0));
+      setDate(transaction.date || '');
+      setType(transaction.amount < 0 ? 'expense' : 'income');
+      setSelectedAccountId(transaction.account_id || '');
     }
-  }, [transaction, propSelectedAccountId]);
+  }, [transaction, propSelectedAccountId, isAdding]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -34,7 +34,7 @@ const OneOffTransactionForm = ({ transaction, onSave, onCancel, accounts, select
 
   return (
     <Box as="form" onSubmit={handleSubmit} p={4} bg={bg} borderRadius="md" boxShadow="sm" w="100%">
-      <Heading size="md" mb={4}>{transaction ? 'Edit' : 'Add'} One-Off Transaction</Heading>
+      <Heading size="md" mb={4}>{isAdding ? 'Add' : 'Edit'} Local Transaction</Heading>
       <Stack spacing={4}>
         <FormControl isRequired>
           <FormLabel>Description</FormLabel>
@@ -55,7 +55,7 @@ const OneOffTransactionForm = ({ transaction, onSave, onCancel, accounts, select
           <Select value={selectedAccountId} onChange={(e) => setSelectedAccountId(parseInt(e.target.value))}>
             {accounts.map(account => (
               <option key={account.id} value={account.id}>
-                {account.name}
+                {account.display_name || account.name}
               </option>
             ))}
           </Select>
@@ -68,7 +68,7 @@ const OneOffTransactionForm = ({ transaction, onSave, onCancel, accounts, select
           </Select>
         </FormControl>
         <Stack direction="row" spacing={4}>
-          <Button type="submit" colorScheme="blue">{transaction ? 'Update' : 'Add'}</Button>
+          <Button type="submit" colorScheme="blue">{isAdding ? 'Add' : 'Update'}</Button>
           {onCancel && <Button onClick={onCancel}>Cancel</Button>}
         </Stack>
       </Stack>
@@ -76,4 +76,4 @@ const OneOffTransactionForm = ({ transaction, onSave, onCancel, accounts, select
   );
 };
 
-export default OneOffTransactionForm;
+export default LocalTransactionForm;

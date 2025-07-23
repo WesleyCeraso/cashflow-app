@@ -1,8 +1,8 @@
 import { Box, Slider, SliderTrack, SliderFilledTrack, SliderThumb, SliderMark, Tooltip, FormLabel, FormControl, useColorModeValue } from '@chakra-ui/react';
 import { useState } from 'react';
 
-const ProjectionHorizonSelector = ({ onHorizonSelect }) => {
-  const [sliderValue, setSliderValue] = useState(3); // Default to 3 months
+const ProjectionHorizonSelector = ({ onHorizonSelect, currentHorizon }) => {
+  const [sliderValue, setSliderValue] = useState(currentHorizon);
   const [showTooltip, setShowTooltip] = useState(false);
 
   const horizons = [1, 3, 6, 12, 24, 36]; // Example horizons in months
@@ -17,7 +17,7 @@ const ProjectionHorizonSelector = ({ onHorizonSelect }) => {
       <FormLabel>Projection Horizon ({sliderValue} months)</FormLabel>
       <Slider
         id="slider"
-        defaultValue={sliderValue}
+        defaultValue={currentHorizon}
         min={1}
         max={36}
         step={1}
