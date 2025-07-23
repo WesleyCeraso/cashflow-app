@@ -11,7 +11,7 @@ const OneOffTransactionForm = ({ transaction, onSave, onCancel, accounts, select
   useEffect(() => {
     if (transaction) {
       setDescription(transaction.description);
-      setAmount(Math.abs(transaction.amount));
+      setAmount(Math.abs(transaction.amount || 0));
       setDate(transaction.date);
       setType(transaction.amount < 0 ? 'expense' : 'income');
       setSelectedAccountId(transaction.account_id || '');

@@ -18,7 +18,7 @@ const KeyEvents = ({ events, onEdit, onDelete }) => {
               <Th p={2} isNumeric>Credit</Th>
               <Th p={2} isNumeric>Debit</Th>
               <Th p={2} isNumeric>Balance</Th>
-              <Th p={2}>Actions</Th>
+              
             </Tr>
           </Thead>
           <Tbody>
@@ -31,7 +31,6 @@ const KeyEvents = ({ events, onEdit, onDelete }) => {
                   key={index}
                   fontWeight={event.is_subtotal ? 'bold' : 'normal'}
                   bg={event.is_subtotal ? headerBg : 'transparent'}
-                  color={event.is_one_off ? useColorModeValue('blue.600', 'blue.300') : 'inherit'}
                 >
                   {isNewDay && !event.is_subtotal && (
                     <Td p={2} rowSpan={dailyEventsCount} whiteSpace="nowrap">{format(new Date(event.date), 'yyyy-MM-dd')}</Td>
@@ -39,7 +38,7 @@ const KeyEvents = ({ events, onEdit, onDelete }) => {
                   {event.is_subtotal && (
                     <Td p={2} whiteSpace="nowrap">{format(new Date(event.date), 'yyyy-MM-dd')}</Td>
                   )}
-                  <Td p={2}>{event.description}</Td>
+                  <Td p={2} color={event.is_one_off ? useColorModeValue('blue.600', 'blue.300') : 'inherit'}>{event.description}</Td>
                   <Td p={2} isNumeric color="green.500">
                     {event.is_subtotal && event.monthlyCredit !== undefined ? `+${formatCurrency(event.monthlyCredit)}` : (event.amount > 0 ? `+${formatCurrency(event.amount)}` : '')}
                   </Td>
@@ -54,15 +53,7 @@ const KeyEvents = ({ events, onEdit, onDelete }) => {
                   {event.is_subtotal && (
                     <Td p={2} isNumeric>{formatCurrency(event.balance)}</Td>
                   )}
-                  <Td p={2}>
-                    {event.is_one_off && (
-                      <>
-                        <Button size="xs" onClick={() => onEdit(event)}>Edit</Button>
-                        <Button size="xs" ml={2} onClick={() => onDelete(event.id)}>Delete</Button>
-                      </>
-                    )}
-                  </Td>
-                </Tr>
+                  </Tr>
               );
             })}
           </Tbody>

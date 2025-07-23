@@ -1,24 +1,49 @@
-import { Select, useColorModeValue } from '@chakra-ui/react';
+import { Box, Slider, SliderTrack, SliderFilledTrack, SliderThumb, SliderMark, Tooltip, FormLabel, FormControl, useColorModeValue } from '@chakra-ui/react';
+import { useState } from 'react';
 
 const ProjectionHorizonSelector = ({ onHorizonSelect }) => {
-  const horizons = [1, 3, 6, 12]; // In months
-  const textColor = useColorModeValue('gray.800', 'whiteAlpha.900');
-  const bgColor = useColorModeValue('white', 'gray.700');
+  const [sliderValue, setSliderValue] = useState(3); // Default to 3 months
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  const horizons = [1, 3, 6, 12, 24, 36]; // Example horizons in months
+
+  const handleSliderChange = (val) => {
+    setSliderValue(val);
+    onHorizonSelect(val);
+  };
 
   return (
-    <Select 
-      placeholder="Select projection horizon"
-      onChange={(e) => onHorizonSelect(parseInt(e.target.value))}
-      size="lg"
-      bg={bgColor}
-      color={textColor}
-    >
-      {horizons.map(horizon => (
-        <option key={horizon} value={horizon}>
-          {horizon} month{horizon > 1 ? 's' : ''}
-        </option>
-      ))}
-    </Select>
+    <FormControl>
+      <FormLabel>Projection Horizon ({sliderValue} months)</FormLabel>
+      <Slider
+        id="slider"
+        defaultValue={sliderValue}
+        min={1}
+        max={36}
+        step={1}
+        onChange={(v) => handleSliderChange(v)}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
+        <SliderMark value={1} mt="1" fontSize="sm">1m</SliderMark>
+        <SliderMark value={12} mt="1" fontSize="sm">12m</SliderMark>
+        <SliderMark value={24} mt="1" fontSize="sm">24m</SliderMark>
+        <SliderMark value={36} mt="1" fontSize="sm">36m</SliderMark>
+        <SliderTrack>
+          <SliderFilledTrack />
+        </SliderTrack>
+        <Tooltip
+          hasArrow
+          bg="blue.500"
+          color="white"
+          placement="top"
+          isOpen={showTooltip}
+          label={`${sliderValue} months`}
+        >
+          <SliderThumb />
+        </Tooltip>
+      </Slider>
+    </FormControl>
   );
 };
 
