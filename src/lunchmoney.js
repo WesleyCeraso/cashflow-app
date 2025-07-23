@@ -9,9 +9,13 @@ export const getAccounts = async (apiKey) => {
   return response.data;
 };
 
-export const getRecurringItems = async (apiKey) => {
+export const getRecurringItems = async (apiKey, startDate, endDate) => {
   const response = await axios.get(`${API_URL}/recurring_items`, {
     headers: { Authorization: `Bearer ${apiKey}` },
+    params: {
+        start_date: startDate,
+        end_date: endDate,
+    }
   });
   console.log('Raw recurring items API response:', response.data);
   return response.data;

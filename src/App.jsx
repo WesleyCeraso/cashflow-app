@@ -15,7 +15,7 @@ import { projectCashFlow } from './projection';
 function App() {
   const [apiKey, setApiKey] = useState(localStorage.getItem('lm_api_key'));
   const [accounts, setAccounts] = useState([]);
-  const [recurringItems, setRecurringItems] = useState([]);
+  
   const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [projectionHorizon, setProjectionHorizon] = useState(3);
   const [projection, setProjection] = useState(null);
@@ -28,13 +28,12 @@ function App() {
   useEffect(() => {
     if (apiKey) {
       setLoading(true);
-      console.log('API Key found, fetching data...');
-      Promise.all([getAccounts(apiKey), getRecurringItems(apiKey), getPlaidAccounts(apiKey)])
-        .then(([accountsData, recurringItemsData, plaidAccountsData]) => {
+      console.log('API Key found, fetching accounts...');
+      Promise.all([getAccounts(apiKey), getPlaidAccounts(apiKey)])
+        .then(([accountsData, plaidAccountsData]) => {
           console.log('Raw Plaid accounts data:', plaidAccountsData);
           const allAccounts = [...accountsData.assets, ...plaidAccountsData.plaid_accounts];
           setAccounts(allAccounts);
-          setRecurringItems(recurringItemsData || []);
         })
         .catch(err => {
           console.error('Error fetching data:', err);
@@ -53,18 +52,30 @@ function App() {
     localStorage.removeItem('lm_api_key');
     setApiKey(null);
     setAccounts([]);
-    setRecurringItems([]);
     setSelectedAccountId(null);
     setProjection(null);
     setError(null);
   };
 
   const handleGenerateProjection = useCallback(() => {
-    if(selectedAccountId && projectionHorizon) {
-        const projectionData = projectCashFlow(accounts, recurringItems, selectedAccountId, projectionHorizon);
-        setProjection(projectionData);
+    if (selectedAccountId && projectionHorizon) {
+      setLoading(true);
+      const today = new Date();
+      const startDate = today.toISOString().slice(0, 10);
+      const endDate = new Date(new Date().setMonth(today.getMonth() + projectionHorizon)).toISOString().slice(0, 10);
+
+      getRecurringItems(apiKey, startDate, endDate)
+        .then(recurringItemsData => {
+          const projectionData = projectCashFlow(accounts, recurringItemsData, selectedAccountId, projectionHorizon);
+          setProjection(projectionData);
+        })
+        .catch(err => {
+          console.error('Error generating projection:', err);
+          setError('Error generating projection. Please try again.');
+        })
+        .finally(() => setLoading(false));
     }
-  }, [accounts, recurringItems, selectedAccountId, projectionHorizon]);
+  }, [apiKey, accounts, selectedAccountId, projectionHorizon]);
 
   const chartData = projection ? {
     labels: projection.dailyBalances.map(d => d.date),
