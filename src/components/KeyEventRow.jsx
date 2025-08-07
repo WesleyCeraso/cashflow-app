@@ -2,7 +2,7 @@ import { Tr, Td, Button, useColorModeValue } from '@chakra-ui/react';
 import { formatCurrency } from '../utils';
 import { format, parse } from 'date-fns';
 
-const KeyEventRow = ({ event, isNewDay, dailyEventsCount, onEditLocalTransaction, onDeleteLocalTransaction, headerBg }) => {
+const KeyEventRow = ({ event, isNewDay, dailyEventsCount, headerBg }) => {
 
   return (
     <Tr

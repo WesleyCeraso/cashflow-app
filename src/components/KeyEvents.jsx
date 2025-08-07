@@ -3,7 +3,7 @@ import { formatCurrency } from '../utils';
 import { format, parse } from 'date-fns';
 import KeyEventRow from './KeyEventRow';
 
-const KeyEvents = ({ events, onEdit: onEditLocalTransaction, onDelete: onDeleteLocalTransaction }) => {
+const KeyEvents = ({ events }) => {
   const bg = useColorModeValue('white', 'gray.700');
   const headerBg = useColorModeValue('gray.100', 'gray.600');
 
@@ -33,8 +33,6 @@ const KeyEvents = ({ events, onEdit: onEditLocalTransaction, onDelete: onDeleteL
                   index={index}
                   isNewDay={isNewDay}
                   dailyEventsCount={dailyEventsCount}
-                  onEditLocalTransaction={onEditLocalTransaction}
-                  onDeleteLocalTransaction={onDeleteLocalTransaction}
                   headerBg={headerBg}
                 />
               );
