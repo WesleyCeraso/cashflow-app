@@ -2,7 +2,7 @@ import { Tr, Td, Button, useColorModeValue } from '@chakra-ui/react';
 import { formatCurrency } from '../utils';
 import { format, parse } from 'date-fns';
 
-const KeyEventRow = ({ event, isNewDay, dailyEventsCount, headerBg }) => {
+const KeyEventRow = ({ event, isNewDay, dailyBalance, dailyEventsCount, headerBg }) => {
 
   return (
     <Tr
@@ -24,7 +24,7 @@ const KeyEventRow = ({ event, isNewDay, dailyEventsCount, headerBg }) => {
       </Td>
       {isNewDay && !event.is_subtotal && (
         <Td p={2} isNumeric rowSpan={dailyEventsCount}>
-          {formatCurrency(event.balance)}
+          {formatCurrency(dailyBalance)}
         </Td>
       )}
       {event.is_subtotal && (

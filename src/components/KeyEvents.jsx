@@ -24,6 +24,10 @@ const KeyEvents = ({ events }) => {
           <Tbody>
             {events.map((event, index) => {
               const isNewDay = index === 0 || event.date !== events[index - 1].date;
+              let dailyBalance = event.balance;
+              for (let i = index + 1; i < events.length && events[i].date == event.date; i++) {
+                dailyBalance = events[i].balance;
+              }
               const dailyEventsCount = events.filter(e => e.date === event.date && !e.is_subtotal).length;
 
               return (
@@ -32,6 +36,7 @@ const KeyEvents = ({ events }) => {
                   event={event}
                   index={index}
                   isNewDay={isNewDay}
+                  dailyBalance={dailyBalance}
                   dailyEventsCount={dailyEventsCount}
                   headerBg={headerBg}
                 />
