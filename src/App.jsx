@@ -67,10 +67,10 @@ function App() {
           setLocalTransactions(getLocalTransactions());
 
           const storedAccountId = localStorage.getItem('lm_selected_account_id');
-          if (storedAccountId && allAccounts.some(account => account.key === storedAccountId)) {
-            setSelectedAccountId(storedAccountId);
-          } else if (storedAccountId && allAccounts.some(account => String(account.id) === storedAccountId)) {
-            const migratedAccount = allAccounts.find(account => String(account.id) === storedAccountId);
+          const migratedAccount = storedAccountId
+            ? allAccounts.find(account => account.key === storedAccountId || String(account.id) === storedAccountId)
+            : null;
+          if (migratedAccount) {
             setSelectedAccountId(migratedAccount.key);
           } else if (allAccounts.length > 0) {
             setSelectedAccountId(allAccounts[0].key);
