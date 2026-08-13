@@ -12,6 +12,7 @@ import {
 } from 'chart.js';
 import { Box, Heading, useColorModeValue } from '@chakra-ui/react';
 import { formatCurrency } from '../utils';
+import { format, parse } from 'date-fns';
 
 ChartJS.register(
   CategoryScale,
@@ -24,6 +25,24 @@ ChartJS.register(
   Filler
 );
 
+const parseChartDate = (date) => parse(date, 'yyyy-MM-dd', new Date());
+
+const formatXAxisLabel = (labels, index) => {
+  const date = labels[index];
+  if (!date) return '';
+
+  const parsedDate = parseChartDate(date);
+  const isShortRange = labels.length <= 45;
+
+  if (isShortRange) {
+    return index % 4 === 0 || index === labels.length - 1 ? format(parsedDate, 'MMM d') : '';
+  }
+
+  const previousDate = labels[index - 1];
+  const previousMonth = previousDate ? parseChartDate(previousDate).getMonth() : null;
+  return index === 0 || parsedDate.getMonth() !== previousMonth ? format(parsedDate, 'MMM') : '';
+};
+
 const CashFlowChart = ({ data, keyEvents }) => {
   const bg = useColorModeValue('white', 'gray.700');
   const positiveFillColor = useColorModeValue('rgba(66, 153, 225, 0.2)', 'rgba(144, 205, 244, 0.2)');
@@ -31,6 +50,15 @@ const CashFlowChart = ({ data, keyEvents }) => {
   const positiveBorderColor = useColorModeValue('#4299E1', '#90CDF4');
   const negativeBorderColor = useColorModeValue('rgb(229, 62, 62)', 'rgb(235, 100, 100)');
   const oneOffPointColor = useColorModeValue('#805AD5', '#D6BCFA'); // Purple for local transactions
+  const recurringIncomePointColor = useColorModeValue('#38A169', '#68D391');
+  const neutralSegmentColor = useColorModeValue('#A0AEC0', '#718096');
+
+  const hasRecurringIncome = (date) => keyEvents.some(event =>
+    event.date === date &&
+    !event.is_subtotal &&
+    parseFloat(event.amount) > 0 &&
+    (event.type === 'recurring-projected' || event.recurringId != null || event.is_income)
+  );
 
   const options = {
     responsive: true,
@@ -73,6 +101,15 @@ const CashFlowChart = ({ data, keyEvents }) => {
       }
     },
     scales: {
+      x: {
+        ticks: {
+          autoSkip: false,
+          maxRotation: 0,
+          callback: function(value, index) {
+            return formatXAxisLabel(this.chart.data.labels, index);
+          },
+        },
+      },
       y: {
         beginAtZero: true
       }
@@ -89,13 +126,16 @@ const CashFlowChart = ({ data, keyEvents }) => {
         below: negativeFillColor,
       },
       segment: {
-        borderColor: useColorModeValue('#A0AEC0', '#718096'), // Neutral gray color
+        borderColor: neutralSegmentColor,
       },
       pointBackgroundColor: context => {
         const date = context.chart.data.labels[context.dataIndex];
         const isLocal = keyEvents.some(event => event.date === date && event.is_local);
         if (isLocal) {
           return oneOffPointColor;
+        }
+        if (hasRecurringIncome(date)) {
+          return recurringIncomePointColor;
         }
         const value = context.parsed && context.parsed.y !== undefined ? context.parsed.y : 0;
         return value >= 0 ? positiveBorderColor : negativeBorderColor;
@@ -106,13 +146,16 @@ const CashFlowChart = ({ data, keyEvents }) => {
         if (isLocal) {
           return oneOffPointColor;
         }
+        if (hasRecurringIncome(date)) {
+          return recurringIncomePointColor;
+        }
         const value = context.parsed && context.parsed.y !== undefined ? context.parsed.y : 0;
         return value >= 0 ? positiveBorderColor : negativeBorderColor;
       },
       pointRadius: context => {
         const date = context.chart.data.labels[context.dataIndex];
         const hasTransactions = keyEvents.some(event => event.date === date && !event.is_subtotal);
-        return hasTransactions ? 3 : 0;
+        return hasRecurringIncome(date) ? 5 : (hasTransactions ? 3 : 0);
       },
       pointHitRadius: context => {
         const date = context.chart.data.labels[context.dataIndex];
